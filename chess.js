@@ -2,6 +2,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const boardElement = document.getElementById('chessboard');
   
     let currentTurn = 'white';
+    let moveHistory = [];
+    let realHistory = [];
+
     const pieces = {
       black: ['♜','♞','♝','♛','♚','♝','♞','♜'],
       white: ['♖','♘','♗','♕','♔','♗','♘','♖'],
@@ -32,7 +35,14 @@ document.addEventListener("DOMContentLoaded", function () {
       ['P','P','P','P','P','P','P','P'],
       ['R','N','B','Q','K','B','N','R'],
     ];
-  
+
+    const openingBook = {
+      "e2e4": ["e7e5", "c7c5"],                   
+      "d2d4": ["d7d5", "g8f6"],                    
+      "e2e4,e7e5,f2f4": ["e5f4"],                 
+      "d2d4,d7d5,c2c4": ["e7e6", "c7c6"]          
+    };
+      
     let selected = null;
     let startRow = null, startCol = null;
     const grid = [];
@@ -112,7 +122,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (isMaximizing) {
         let maxEval = -Infinity;
         for (let move of moves) {
-          const backup = applyMove(board, move);
+          const backup = applyMove(board, move, false);
           const eval = minimax(board, depth - 1, false, alpha, beta);
           undoMove(board, backup);
           maxEval = Math.max(maxEval, eval);
@@ -123,7 +133,7 @@ document.addEventListener("DOMContentLoaded", function () {
       } else {
         let minEval = Infinity;
         for (let move of moves) {
-          const backup = applyMove(board, move);
+          const backup = applyMove(board, move, false);
           const eval = minimax(board, depth - 1, true, alpha, beta);
           undoMove(board, backup);
           minEval = Math.min(minEval, eval);
@@ -134,40 +144,51 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     }
   
-    // AI membuat langkah terbaik
     function aiBestMove() {
-      console.log("AI thinking...");
-      console.log("Current board state:", board);
-      
+    console.log("AI thinking...");
+    console.log("Current board state:", board);
+
+    // Coba dapatkan langkah dari opening book
+    const bookMove = getBookMove(moveHistory);
+      if (bookMove) {
+        console.log("Using opening book move:", bookMove);
+        const backup = applyMove(board, bookMove);
+        moveHistory.push(convertMoveToString(bookMove));
+        renderBoard();
+        currentTurn = 'white';
+        return;
+      }
+
       const moves = generateMoves(board, 'black');
       console.log("Available moves for AI:", moves);
-      
+
       if (moves.length === 0) {
         console.log("No moves available for AI!");
         return;
       }
-      
+
       let bestEval = Infinity;
       let bestMove = null;
-  
+
       for (let move of moves) {
         console.log("Evaluating move:", move);
-        const backup = applyMove(board, move);
-        const eval = minimax(board, 2, true, -Infinity, Infinity); // Kedalaman 2 untuk kinerja lebih baik
+        const backup = applyMove(board, move, false);
+        const eval = minimax(board, 2, true, -Infinity, Infinity);
         undoMove(board, backup);
         console.log("Move evaluation:", eval);
-  
+
         if (eval < bestEval) {
           bestEval = eval;
           bestMove = move;
         }
       }
-  
+
       console.log("Best move found:", bestMove);
       if (bestMove) {
         const backup = applyMove(board, bestMove);
+        realHistory.push(convertMoveToString(bestMove));
         console.log("Board after AI move:", board);
-        renderBoard(); // update tampilan HTML dengan fungsi yang memetakan huruf ke simbol
+        renderBoard();
         currentTurn = 'white';
         console.log("Turn changed to white");
       }
@@ -266,7 +287,38 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     
       return moves;
-    }  
+    }
+    
+    function getBookMove(history) {
+      const key = history.join(',');
+      if (openingBook[key]) {
+        const responses = openingBook[key];
+        const randomIndex = Math.floor(Math.random() * responses.length);
+        const moveStr = responses[randomIndex];
+
+        // Cari langkah dari list move yang cocok dengan string 'fromto'
+        const allMoves = generateMoves(board, 'black');
+        return allMoves.find(m => convertMoveToString(m) === moveStr);
+      }
+      return null;
+    }
+
+    function convertMoveToString(move) {
+      if (!move || !move.from || !move.to) return '';
+    
+      const pieceChar = move.fromPiece || move.piece || ''; // dapatkan jenis bidak
+      const pieceNameMap = {
+        'p': 'Pawn', 'r': 'Rook', 'n': 'Knight', 'b': 'Bishop', 'q': 'Queen', 'k': 'King',
+        'P': 'Pawn', 'R': 'Rook', 'N': 'Knight', 'B': 'Bishop', 'Q': 'Queen', 'K': 'King'
+      };
+    
+      const pieceName = pieceNameMap[pieceChar] || '?';
+    
+      const from = String.fromCharCode(97 + move.from.col) + (8 - move.from.row);
+      const to = String.fromCharCode(97 + move.to.col) + (8 - move.to.row);
+    
+      return `${pieceName} ${from} → ${to}`;
+    }    
   
     // Menghasilkan langkah-langkah linier untuk benteng, menteri, dan ratu
     function linearMoves(board, row, col, isWhitePlayer, directions) {
@@ -298,25 +350,44 @@ document.addEventListener("DOMContentLoaded", function () {
     function inBounds(row, col) {
       return row >= 0 && row < 8 && col >= 0 && col < 8;
     }
+
+    function updateHistoryDisplay() {
+      const historyList = document.getElementById("historyList");
+      historyList.innerHTML = '';
+    
+      for (let i = 0; i < realHistory.length; i += 2) {
+        const whiteMove = realHistory[i] ? convertMoveToString(realHistory[i]) : '';
+        const blackMove = realHistory[i + 1] ? convertMoveToString(realHistory[i + 1]) : '';
+        const li = document.createElement('li');
+        li.textContent = `${whiteMove} ${blackMove}`.trim();
+        historyList.appendChild(li);
+      }
+    }       
   
     // Menerapkan gerakan ke papan
-    function applyMove(board, move) {
+    function applyMove(board, move, isRealMove = true) {
       const { from, to, piece } = move;
     
-      const captured = board[to.row][to.col]; // Simpan bidak yang tertangkap
+      const captured = board[to.row][to.col];
+      const backup = {
+        from: { ...from },
+        to: { ...to },
+        fromPiece: piece,
+        toPiece: captured
+      };
+    
       board[to.row][to.col] = piece;
       board[from.row][from.col] = '';
     
-      const backup = {
-        fromPiece: piece,
-        toPiece: captured,
-        from: { ...from },
-        to: { ...to }
-      };
+      // Hanya simpan ke histori nyata jika ini langkah pemain atau AI sebenarnya
+      if (isRealMove) {
+        realHistory.push(backup);
+        updateHistoryDisplay();
+      }
     
       return backup;
-    }  
-  
+    }    
+    
     // Membatalkan gerakan (untuk algoritma minimax)
     function undoMove(board, backup) {
       const { from, to, fromPiece, toPiece } = backup;
@@ -484,6 +555,9 @@ document.addEventListener("DOMContentLoaded", function () {
               // Update tampilan HTML
               cell.innerHTML = '';
               cell.appendChild(selected);
+
+              moveHistory.push(String.fromCharCode(97 + startCol) + (8 - startRow) + 
+                   String.fromCharCode(97 + endCol) + (8 - endRow));
             
               currentTurn = (currentTurn === 'white') ? 'black' : 'white';
               console.log("Turn changed to", currentTurn);

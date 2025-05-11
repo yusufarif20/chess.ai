@@ -30,3 +30,117 @@ body {
   .piece {
     cursor: grab;
   }
+  #historyPanel {
+    width: 400px;
+    padding: 15px;
+    gap: 20px;
+    background-color: #2c3e50;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow-y: auto;
+    height: 460px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #ecf0f1;
+    scrollbar-width: thin;
+    scrollbar-color: #34495e #2c3e50;
+    position: relative;
+  }
+  
+  #historyPanel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to bottom, rgba(44, 62, 80, 1), rgba(44, 62, 80, 0));
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  #historyPanel::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: linear-gradient(to top, rgba(44, 62, 80, 1), rgba(44, 62, 80, 0));
+    pointer-events: none;
+    z-index: 1;
+  }
+  
+  #historyPanel h4 {
+    color: #f1c40f;
+    padding-right: 20px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #34495e;
+    font-size: 1.2em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: sticky;
+    top: 0;
+    background-color: #2c3e50;
+    z-index: 2;
+  }
+  
+  #historyList {
+    padding-left: 20px;
+    margin: 0;
+    list-style-type: none;
+    counter-reset: move-counter;
+  }
+  
+  #historyList li {
+    counter-increment: move-counter;
+    margin-bottom: 8px;
+    padding: 8px 10px;
+    background-color: rgba(52, 73, 94, 0.5);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    position: relative;
+    font-size: 0.95em;
+  }
+  
+  #historyList li::before {
+    content: counter(move-counter) ".";
+    color: #f1c40f;
+    margin-right: 8px;
+    font-weight: bold;
+  }
+  
+  #historyList li:hover {
+    background-color: #34495e;
+    transform: translateX(3px);
+  }
+  
+  #historyList li:nth-child(odd) {
+    background-color: rgba(44, 62, 80, 0.7);
+  }
+  
+  /* Scrollbar styling */
+  #historyPanel::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  #historyPanel::-webkit-scrollbar-track {
+    background: #2c3e50;
+  }
+  
+  #historyPanel::-webkit-scrollbar-thumb {
+    background-color: #34495e;
+    border-radius: 3px;
+  }
+  
+  #historyPanel::-webkit-scrollbar-thumb:hover {
+    background-color: #f1c40f;
+  }
+
+  .main-container {
+    display: flex;
+    gap: 20px; /* spasi horizontal antara histori dan papan */
+    align-items: start;
+  }
