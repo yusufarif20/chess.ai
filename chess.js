@@ -5,13 +5,6 @@ document.addEventListener("DOMContentLoaded", function () {
   let moveHistory = []; // Gunakan satu history saja
   let gameStarted = false;
 
-  const pieces = {
-    black: ['♜','♞','♝','♛','♚','♝','♞','♜'],
-    white: ['♖','♘','♗','♕','♔','♗','♘','♖'],
-    blackPawns: '♟',
-    whitePawns: '♙'
-  };
-
   const pieceMap = {
     'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚', 'p': '♟',
     'R': '♖', 'N': '♘', 'B': '♗', 'Q': '♕', 'K': '♔', 'P': '♙'
